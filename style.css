@@ -1,0 +1,375 @@
+/* === VARIABLES & GLOBAL RESET === */
+:root {
+  --bg: #0f0f0f;
+  --panel: #141414;
+  --text: #cfcfcf;
+  --accent: #777; 
+  --border: #2a2a2a;
+  --button-bg: #1a1a1a;
+  --button-hover: #222;
+  --button-text: #cfcfcf;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  font-family: "Inter", "Segoe UI", sans-serif;
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* === GAME CONTAINER & LAYOUT === */
+#gameContainer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Center Wrapper: Holds Header, Canvas, and Progress Bar */
+#canvasWrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px; /* Gap between Header, Canvas, and Bar */
+}
+
+/* === NEW: GAME HEADER (Logo + Stats) === */
+#gameHeader {
+    display: flex;
+    justify-content: space-between; /* Pushes Logo left, Stats right */
+    align-items: center;
+    width: 800px; /* Matches canvas width */
+    margin-bottom: 5px;
+}
+
+#gameLogo {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* === HUD STATS (Now Horizontal) === */
+#ui {
+  position: static; /* No longer stuck to the top-left corner */
+  display: flex;
+  flex-direction: row; /* Side-by-side */
+  gap: 15px;
+}
+
+.in-game-ui {
+    min-width: 100px;
+    padding: 10px 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.in-game-ui .stat-label {
+    font-size: 10px;
+}
+
+.in-game-ui .stat-value {
+    font-size: 24px; 
+}
+
+/* === CANVAS & PROGRESS BAR === */
+canvas {
+  background: #000000;
+  border: 3px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 0 40px rgba(0,0,0,0.6);
+}
+
+#timeProgressContainer {
+    width: 800px;
+    height: 15px; 
+    background-color: #111;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#timeProgressBar {
+    height: 100%;
+    width: 0%;
+    background-color: #ffffff;
+    box-shadow: 0 0 10px #7a7a7a;
+    transition: width 0.1s linear;
+}
+
+/* === MENU CONTAINERS === */
+.full-screen-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+#overlay {
+  display: none; 
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+#pauseMenu, #settingsMenu, #taskCompleteMenu {
+  background: var(--panel);
+  padding: 30px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  text-align: center;
+  min-width: 300px;
+  display: flex; 
+  flex-direction: column;
+  gap: 15px;
+  position: relative;
+  z-index: 10;
+}
+
+#taskCompleteMenu {
+    min-width: 500px;
+    gap: 25px;
+}
+
+/* === STATS & GRIDS === */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    background: #0a0a0a;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    align-items: center;
+    min-width: 140px;
+}
+
+.stat-label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #777;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+/* === BUTTONS & CARDS === */
+button {
+  padding: 12px 18px;
+  background: var(--button-bg);
+  border: 1px solid var(--border);
+  color: var(--button-text);
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: 0.15s ease;
+}
+
+button:hover {
+  background: var(--button-hover);
+}
+
+.secondary-btn {
+  position: static;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+.secondary-btn:hover {
+  background: var(--button-hover);
+  border-color: white;
+}
+
+.big-btn {
+    position: absolute;
+    top: 59.2%; 
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 280px; 
+    height: 100px;
+    background-color: transparent; 
+    color: transparent;
+    border: none;
+    z-index: 999; 
+    cursor: pointer;
+}
+.big-btn:hover { background-color: transparent; }
+
+.menu-buttons-row {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    width: 100%;
+}
+
+/* === MODE SELECTION CARDS === */
+.mode-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
+.mode-card {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 15px;
+    width: 200px;  
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.2s;
+    padding: 20px;
+}
+
+.mode-card:hover {
+    border-color: var(--text);
+    background: var(--button-hover);
+}
+
+.mode-card h3 { margin: 0 0 10px 0; color: #fff; font-size: 20px; }
+.mode-card p { margin: 0; font-size: 14px; color: #999; }
+
+#btnTimeToggle {
+    margin-top: 10px;
+    width: 320px; 
+    height: 80px; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0px;
+}
+
+.purple-card { border-color: #bf00ff !important; box-shadow: 0 0 15px rgba(191, 0, 255, 0.2); }
+.purple-card h3 { color: #bf00ff !important; }
+
+.gold-card { border-color: #ffcc00 !important; box-shadow: 0 0 15px rgba(255, 204, 0, 0.2); }
+.gold-card h3 { color: #ffcc00 !important; }
+
+/* === SETTINGS COMPONENTS === */
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text);
+    font-size: 18px;
+}
+
+#settingsMenu button {
+    width: 100%;
+    position: static;
+}
+
+h2 { margin: 0 0 15px 0; color: var(--text); }
+
+input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #ff0000;
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    border: 1px solid white; 
+    padding: 0;
+    width: 40px;
+    height: 25px;
+    cursor: pointer;
+    background: none;
+}
+input[type="color"]::-webkit-color-swatch { border: none; }
+input[type="color"]::-moz-color-swatch { border: none; }
+
+/* === MEDIA & ANIMATIONS === */
+.fullscreen-media {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 60; 
+    background-color: black;
+}
+
+.fullscreen-media video, 
+.fullscreen-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+#titleScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;       
+    justify-content: center; 
+    align-items: center;     
+    z-index: 70; 
+    background: transparent;
+}
+
+#modeSelectScreen { z-index: 50; }
+
+.fade-out-sequence {
+    opacity: 0;
+    transition: opacity 1s ease;
+    pointer-events: none;
+}
+
+#confettiCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0; 
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}

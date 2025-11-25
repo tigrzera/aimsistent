@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AimSistent</title>
+    <link rel="icon" type="image/png" href="aimsistentfavicon.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+    <div id="mediaSequence" class="fullscreen-media">
+        <video id="vidIntro" autoplay muted playsinline src="AimSistentIntro.mp4"></video>
+        <img id="imgIdle" src="AimSistent (4).png" style="display: none;">
+        <video id="vidOutro" src="AimSistentOutro.mp4" style="display: none;"></video>
+    </div>
+
+    <div id="titleScreen" class="full-screen-menu" style="display: none;">
+        <button id="mainPlayBtn" class="big-btn">PLAY</button>
+    </div>
+
+    <div id="modeSelectScreen" class="full-screen-menu" style="display: none;">
+        <h2>SELECT MODE</h2>
+
+        <div class="mode-buttons">
+            <button id="btnDynamic" class="mode-card">
+                <h3>DYNAMIC</h3>
+                <p>Targets move and bounce.</p>
+            </button>
+            <button id="btnStatic" class="mode-card">
+                <h3>STATIC</h3>
+                <p>Targets stay still.</p>
+            </button>
+        </div>
+
+        <button id="btnTimeToggle" class="mode-card purple-card">
+            <h3 id="timeTitle">⏱️ STANDARD</h3>
+            <p id="timeDesc">Time: 60s</p>
+        </button>
+        
+        <div style="margin-top: 40px; display: flex; gap: 20px; justify-content: center;">
+            <button id="modeSettingsBtn" class="secondary-btn">Settings</button>
+            <button id="backToTitleBtn" class="secondary-btn">Back</button>
+        </div>
+    </div>
+
+<div id="gameContainer" style="display: none;">
+        
+        <div id="canvasWrapper">
+            
+            <div id="gameHeader">
+                <img src="aimsistenttextlogo.png" id="gameLogo" alt="AimSistent">
+                
+                <div id="ui">
+                    <div id="scoreBox" class="stat-item in-game-ui">
+                        <span class="stat-label">SCORE</span>
+                        <span class="stat-value" id="score">0</span>
+                    </div>
+                    
+                    <div id="comboBox" class="stat-item in-game-ui">
+                        <span class="stat-label">COMBO</span>
+                        <span class="stat-value" id="combo">0</span>
+                    </div>
+                    
+                    <div id="timerBox" class="stat-item in-game-ui">
+                        <span class="stat-label">TIME</span>
+                        <span class="stat-value" id="timer">60</span>
+                    </div>
+                </div>
+            </div>
+
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <div id="timeProgressContainer">
+                <div id="timeProgressBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlay" style="display: none;">
+        
+        <canvas id="confettiCanvas"></canvas>
+
+        <div id="pauseMenu" style="display: none;">
+            <h2>PAUSED</h2>
+            <button id="resumeBtn">Resume</button>
+            <button id="btnPauseRestart">Restart</button> 
+            <button id="settingsBtn">Settings</button>
+            <button id="quitBtn">Exit to Menu</button>
+        </div>
+
+        <div id="settingsMenu" style="display: none;">
+            <h2>SETTINGS</h2>
+            
+            <div class="setting-row">
+                <label>Enable (Z/X) to Shoot</label>
+                <input type="checkbox" id="osuToggle">
+            </div>
+            
+            <div class="setting-row">
+                <label>Target Color</label>
+                <input type="color" id="colorPicker" value="#ff0000">
+            </div>
+
+            <div class="setting-row">
+                <label>Hit Sound</label>
+                <select id="soundPicker" style="padding: 5px; border-radius: 5px; border: none; cursor: pointer;">
+                    <option value="bubble">Pop</option>
+                    <option value="shoot">Knock</option>
+                </select>
+            </div>
+
+            <button id="backBtn" style="margin-top: 20px;">Back</button>
+        </div>
+
+        <div id="taskCompleteMenu" style="display: none;">
+            <h2>TASK COMPLETED</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">SCORE</span>
+                    <span class="stat-value" id="finalScore">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">MAX COMBO</span>
+                    <span class="stat-value" id="finalCombo">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">ACCURACY</span>
+                    <span class="stat-value" id="finalAccuracy">100%</span>
+                </div>
+            </div>
+
+            <div class="menu-buttons-row">
+                <button id="btnTaskRetry" class="secondary-btn">Play Again</button>
+                <button id="btnTaskSettings" class="secondary-btn">Settings</button>
+                <button id="btnTaskMode" class="secondary-btn">Exit to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
