@@ -10,171 +10,237 @@
 </head>
 <body>
 
-    <div id="mediaSequence" class="fullscreen-media">
-        <video id="vidIntro" autoplay muted playsinline src="AimSistentIntro.mp4"></video>
-        <img id="imgIdle" src="AimSistent (4).png" style="display: none;">
-        <video id="vidOutro" src="AimSistentOutro.mp4" style="display: none;"></video>
+    <div id="media-wrap" class="bg-video">
+        <video id="vid-intro" autoplay muted playsinline src="AimSistentIntro.mp4"></video>
+        <img id="img-idle" src="AimSistent (4).png" style="display: none;">
+        <video id="vid-outro" src="AimSistentOutro.mp4" style="display: none;"></video>
     </div>
 
-    <div id="titleScreen" class="full-screen-menu" style="display: none;">
-        <button id="mainPlayBtn" class="big-btn">PLAY</button>
+    <div id="title-screen" class="full-menu" style="display: none;">
+        <button id="play-now" class="ghost-btn">PLAY</button>
+        <button id="credit-link">CREDITS</button>
     </div>
 
-    <div id="setupScreen" class="full-screen-menu" style="display: none;">
-        <div class="menu-panel">
-            <img src="aimsistenttextlogo.png" class="menu-logo" alt="AimSistent">
+    <div id="setup-screen" class="full-menu" style="display: none;">
+        <div class="panel">
+            <img src="aimsistenttextlogo.png" class="panel-logo" alt="AimSistent">
             
-            <div class="tutorial-container">
-                <div class="tutorial-header">
-                    <span>🎯</span>
+            <div class="tut-box">
+                <div class="tut-head">
                     <h3>How to Play</h3>
                 </div>
-                <ul class="tutorial-list">
+                
+                <ul class="tut-list">
                     <li>Choose Mode: <strong>Dynamic</strong> (moving) or <strong>Static</strong> (still)</li>
                     <li>Time Limit: <strong>Standard</strong> (60s) or <strong>Quick Play</strong> (30s)</li>
                     <li><strong>Click targets</strong> to score points</li>
-                    <li>Start with <strong>1x Multiplier</strong></li>
-                    <li><strong>Streak of 5 hits</strong> increases Multiplier by +1</li>
-                    <li><strong>Misses</strong> reset Combo & Multiplier to 1x</li>
-                    <li>Score high before <strong>time runs out</strong>!</li>
+                    <li>Optional: Use <strong>Z / X</strong> keys to shoot</li>
+                    <li>Build your <strong>Combo</strong> to increase score</li>
+                    <li><strong>5 hits</strong> increases score multiplier</li>
+                    <li>Hit as many targets before the <strong>Timer</strong> Runs Out!</li>
                 </ul>
+
+                <div class="sep"></div>
+
+                <div class="slide-box">
+                    <div class="my-slide fade">
+                        <video src="AimSistentDemo.mp4" autoplay loop muted playsinline></video>
+                        <div class="caption">Gameplay Demo</div>
+                    </div>
+
+                    <div class="my-slide fade">
+                        <img src="Screenshot 2025-12-06 042314.png">
+                        <div class="caption">Mode Selection</div>
+                    </div>
+
+                    <div class="my-slide fade">
+                        <img src="Screenshot 2025-12-06 042330.png">
+                        <div class="caption">In-Game View</div>
+                    </div>
+
+                    <a class="prev" onclick="moveSlide(-1)">&#10094;</a>
+                    <a class="next" onclick="moveSlide(1)">&#10095;</a>
+                </div>
+                
+                <div style="text-align:center; margin-top: 5px;">
+                  <span class="dot" onclick="currentSlide(1)"></span> 
+                  <span class="dot" onclick="currentSlide(2)"></span> 
+                  <span class="dot" onclick="currentSlide(3)"></span> 
+                </div>
             </div>
             
-            <div class="menu-buttons-row">
-                <button id="btnOpenSettingsFromSetup" class="secondary-btn">Check Settings</button>
-                <button id="btnGoToModes" class="primary-btn">Next</button>
+            <div class="btn-row">
+                <button id="setup-settings" class="btn-trans">Check Settings</button>
+                <button id="next-btn" class="btn-white">Next</button>
             </div>
         </div>
     </div>
 
-    <div id="modeSelectScreen" class="full-screen-menu" style="display: none;">
-        <div class="menu-panel">
+    <div id="mode-screen" class="full-menu" style="display: none;">
+        <div class="panel">
             <h2>SELECT MODE</h2>
             
-            <div class="stats-grid">
-                <button id="btnDynamic" class="mode-card">
+            <div class="card-grid">
+                <button id="mode-dynamic" class="card">
                     <h3>DYNAMIC</h3>
                     <p>Moving Targets</p>
                 </button>
 
-                <button id="btnStatic" class="mode-card selected-mode">
+                <button id="mode-static" class="card active">
                     <h3>STATIC</h3>
                     <p>Stationary Targets</p>
                 </button>
 
-                <button id="btnTimeToggle" class="mode-card purple-card">
-                    <h3 id="timeTitle">⏱️ STANDARD</h3>
-                    <p id="timeDesc">Time: 60s</p>
+                <button id="time-toggle" class="card card-purp">
+                    <h3 id="time-title">⏱️ STANDARD</h3>
+                    <p id="time-desc">Time: 60s</p>
                 </button>
             </div>
             
-            <button id="btnStartGame">START GAME</button>
+            <button id="start-btn">START GAME</button>
             
-            <div class="menu-buttons-row">
-                <button id="modeSettingsBtn" class="secondary-btn">Settings</button>
-                <button id="backToSetupBtn" class="secondary-btn">Back</button>
+            <div class="btn-row">
+                <button id="mode-set-btn" class="btn-trans">Settings</button>
+                <button id="setup-back" class="btn-trans">Back</button>
             </div>
         </div>
     </div>
 
-    <div id="gameContainer" style="display: none;">
-        <div id="canvasWrapper">
-            <div id="gameHeader">
-                <img src="aimsistenttextlogo.png" id="gameLogo" alt="AimSistent">
+    <div id="main-wrap" style="display: none;">
+        <div id="center-box">
+            <div id="top-bar">
+                <img src="aimsistenttextlogo.png" id="game-logo" alt="AimSistent">
                 
-                <div id="ui">
-                    <div id="scoreBox" class="in-game-ui">
-                        <span class="stat-label">SCORE</span>
-                        <span class="stat-value" id="score">0</span>
+                <div id="stats-row">
+                    <div class="stat-box">
+                        <small>SCORE</small>
+                        <span id="score-val">0</span>
                     </div>
                     
-                    <div id="comboBox" class="in-game-ui">
-                        <span class="stat-label">COMBO</span>
-                        <span class="stat-value" id="combo">0</span>
+                    <div class="stat-box">
+                        <small>COMBO</small>
+                        <span id="combo-val">0</span>
                     </div>
 
-                    <div id="multiplierBox" class="in-game-ui">
-                        <span class="stat-label">MULTIPLIER</span>
-                        <span class="stat-value" id="multiplier">1x</span>
+                    <div class="stat-box">
+                        <small>MULTIPLIER</small>
+                        <span id="mult-val">1x</span>
                     </div>
                     
-                    <div id="timerBox" class="in-game-ui">
-                        <span class="stat-label">TIME</span>
-                        <span class="stat-value" id="timer">60</span>
+                    <div class="stat-box">
+                        <small>TIME</small>
+                        <span id="timer-val">60</span>
                     </div>
                 </div>
             </div>
 
-            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            <canvas id="game-canvas" width="800" height="600"></canvas>
             
-            <div id="timeProgressContainer">
-                <div id="timeProgressBar"></div>
+            <div id="bar-bg">
+                <div id="bar-fill"></div>
             </div>
         </div>
     </div>
 
-    <div id="overlay" style="display: none;">
-        <canvas id="confettiCanvas"></canvas>
+    <div id="overlay-bg" style="display: none;">
+        <canvas id="particles"></canvas>
 
-        <div id="pauseMenu" class="menu-panel" style="display: none;">
-            <h2>PAUSED</h2>
-            <button id="resumeBtn" class="primary-btn">Resume</button>
-            <button id="btnPauseRestart" class="secondary-btn">Restart</button> 
-            <button id="settingsBtn" class="secondary-btn">Settings</button>
-            <button id="quitBtn" class="secondary-btn">Exit to Menu</button>
+        <div id="credits-panel" class="panel" style="display: none;">
+            <img src="aimsistenttextlogo.png" class="panel-logo" alt="AimSistent">
+            
+            <div class="credits-split">
+                <div class="credits-col">
+                    <h3>John</h3>
+                    <ul>
+                        <li>Spawn & Respawn System</li>
+                        <li>Physics & Hit Detection</li>
+                        <li>Game Loop & Time System</li>
+                        <li>State Management</li>
+                        <li>Settings & Audio System</li>
+                        <li>Results & Accuracy Logic</li>
+                        <li>UI Layout & Styling</li>
+                        <li>GitHub Hosting</li>
+                    </ul>
+                </div>
+                <div class="credits-col">
+                    <h3>Jason</h3>
+                    <ul>
+                        <li>Game Planning & Design</li>
+                        <li>Click Animation System</li>
+                        <li>Score Multiplier Logic</li>
+                        <li>Combo Logic Design</li>
+                        <li>Progress Bar System</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-link">
+                Special Thanks: 
+                <a href="https://github.com/catdad/canvas-confetti" target="_blank">canvas-confetti by catdad</a>
+            </div>
+
+            <button id="close-creds" class="btn-white" style="margin-top: 15px;">Close</button>
         </div>
 
-        <div id="settingsMenu" class="menu-panel" style="display: none;">
+        <div id="pause-menu" class="panel" style="display: none;">
+            <h2>PAUSED</h2>
+            <button id="resume-btn" class="btn-white">Resume</button>
+            <button id="restart-btn" class="btn-trans">Restart</button> 
+            <button id="open-set" class="btn-trans">Settings</button>
+            <button id="quit-btn" class="btn-trans">Exit to Menu</button>
+        </div>
+
+        <div id="settings-menu" class="panel" style="display: none;">
             <h2>SETTINGS</h2>
             
-            <div class="setting-row">
-                <label>Keyboard Shooting (Z/X)</label>
-                <input type="checkbox" id="osuToggle">
+            <div class="set-row">
+                <label>Keyboard Shoot (Z/X)</label>
+                <input type="checkbox" id="osu-box">
             </div>
 
-            <div class="setting-row">
+            <div class="set-row">
                 <label>Break Animations</label>
-                <input type="checkbox" id="breakAnimToggle" checked>
-            </div>
+                <input type="checkbox" id="brk-box">
+            </div>            
 
-            <div class="setting-row">
+            <div class="set-row">
                 <label>Target Color</label>
-                <input type="color" id="colorPicker" value="#ff0000">
+                <input type="color" id="col-pick" value="#ff0000">
             </div>
 
-            <div class="setting-row">
+            <div class="set-row">
                 <label>Hit Sound</label>
-                <select id="soundPicker" style="padding: 5px; border-radius: 5px; border: none; cursor: pointer; background: #333; color: white;">
+                <select id="snd-pick" style="padding: 5px; border-radius: 5px; border: none; cursor: pointer; background: #333; color: white;">
                     <option value="bubble">Pop</option>
                     <option value="shoot">Knock</option>
                 </select>
             </div>
 
-            <button id="backBtn" class="primary-btn" style="margin-top: 20px;">Back</button>
+            <button id="back-set" class="btn-white" style="margin-top: 20px;">Back</button>
         </div>
 
-        <div id="taskCompleteMenu" class="menu-panel" style="display: none;">
+        <div id="end-menu" class="panel" style="display: none;">
             <h2>TASK COMPLETED</h2>
             
-            <div class="stats-grid">
-                <div class="in-game-ui">
-                    <span class="stat-label">SCORE</span>
-                    <span class="stat-value" id="finalScore">0</span>
+            <div class="card-grid">
+                <div class="stat-box">
+                    <small>SCORE</small>
+                    <span id="end-score">0</span>
                 </div>
-                <div class="in-game-ui">
-                    <span class="stat-label">MAX COMBO</span>
-                    <span class="stat-value" id="finalCombo">0</span>
+                <div class="stat-box">
+                    <small>MAX COMBO</small>
+                    <span id="end-combo">0</span>
                 </div>
-                <div class="in-game-ui">
-                    <span class="stat-label">ACCURACY</span>
-                    <span class="stat-value" id="finalAccuracy">100%</span>
+                <div class="stat-box">
+                    <small>ACCURACY</small>
+                    <span id="end-acc">100%</span>
                 </div>
             </div>
 
-            <div class="menu-buttons-row">
-                <button id="btnTaskRetry" class="primary-btn">Play Again</button>
-                <button id="btnTaskSettings" class="secondary-btn">Settings</button>
-                <button id="btnTaskMode" class="secondary-btn">Menu</button>
+            <div class="btn-row">
+                <button id="retry-btn" class="btn-white">Play Again</button>
+                <button id="task-set" class="btn-trans">Settings</button>
+                <button id="menu-btn" class="btn-trans">Menu</button>
             </div>
         </div>
     </div>
