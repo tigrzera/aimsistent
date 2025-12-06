@@ -1,207 +1,202 @@
 // game.js
 
-// === CONFIGURATION & ASSETS ===
-const canvas = document.getElementById('gameCanvas');
+const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
-const sfxBubble = new Audio('bubble pop 6.ogg');
-const sfxShoot = new Audio('shoot02.ogg');
-sfxBubble.volume = 0.5; 
-sfxShoot.volume = 0.3;
+// sounds
+const popSound = new Audio('bubble pop 6.ogg');
+const shotSound = new Audio('shoot02.ogg');
+popSound.volume = 0.5; 
+shotSound.volume = 0.3;
 
-const NUM_TARGETS = 3;
-const HIT_ANIM_DURATION = 0.3; 
+// dom stuff
+const titleScrn = document.getElementById('title-screen');
+const setupScrn = document.getElementById('setup-screen'); 
+const modeScrn = document.getElementById('mode-screen');
+const gameWrap = document.getElementById('main-wrap');
+const overlayBg = document.getElementById('overlay-bg');
+const scoreTxt = document.getElementById('score-val');
+const comboTxt = document.getElementById('combo-val');
+const multTxt = document.getElementById('mult-val');
+const timerTxt = document.getElementById('timer-val');
+const barFill = document.getElementById('bar-fill');
 
-// === DOM ELEMENTS ===
-const titleScreen = document.getElementById('titleScreen');
-const setupScreen = document.getElementById('setupScreen'); 
-const modeSelectScreen = document.getElementById('modeSelectScreen');
-const gameContainer = document.getElementById('gameContainer');
-const overlay = document.getElementById('overlay');
-const scoreEl = document.getElementById('score');
-const comboEl = document.getElementById('combo');
-const multiplierEl = document.getElementById('multiplier');
-const timerEl = document.getElementById('timer');
-const timeProgressBar = document.getElementById('timeProgressBar');
+const dynBtn = document.getElementById('mode-dynamic');
+const staBtn = document.getElementById('mode-static');
+const startBtn = document.getElementById('start-btn');
 
-const btnDynamic = document.getElementById('btnDynamic');
-const btnStatic = document.getElementById('btnStatic');
-const btnStartGame = document.getElementById('btnStartGame');
-
-// === GAME STATE ===
+// vars
 let score = 0;
 let combo = 0;
-let maxCombo = 0;
-let totalShots = 0; 
-let totalHits = 0;  
-let multiplier = 1;
+let bestCombo = 0;
+let shots = 0; 
+let hits = 0;  
+let mult = 1;
 
 let timeLeft = 60;
-let gameDuration = 60;
-let running = false;
-let isPaused = false;
-let isResultsOpen = false;
-let movingMode = true; 
-let lastTimestamp = 0;
-let animationFrameId;
+let maxTime = 60;
+let gameActive = false;
+let paused = false;
+let moving = true; 
+let lastTime = 0;
+let loopId;
 
-let selectedMode = 'static'; 
+let currentMode = 'static'; 
 
-// === SETTINGS STATE ===
-let osuMode = false;
-let useBreakAnim = true; 
-let targetColor = "#ff0000ff";
-let currentSoundType = 'bubble'; 
-let mouseX = 0;
-let mouseY = 0;
-let settingsOrigin = 'pause'; 
+// settings
+let osuKeys = false;
+let doBreakAnim = false; 
+let ballColor = "#ff0000ff";
+let soundType = 'bubble'; 
+let mx = 0;
+let my = 0;
+let fromMenu = 'pause'; 
 
-// === CONFETTI MANAGER ===
-let confettiManager = null;
+let confettiObj = null;
 
-// === INITIALIZATION ===
-function init() {
-    resize();
-    window.addEventListener('resize', resize);
+function setup() {
+    doResize();
+    window.addEventListener('resize', doResize);
     
-    const cCanvas = document.getElementById('confettiCanvas');
-    if (cCanvas && window.confetti) {
-        confettiManager = confetti.create(cCanvas, {
+    const pCanvas = document.getElementById('particles');
+    if (pCanvas && window.confetti) {
+        confettiObj = confetti.create(pCanvas, {
             resize: true,
             useWorker: true
         });
     }
     
-    updateModeUI();
+    uiUpdate();
+    showSlides(1); // init carousel
 }
 
-function resize() {
+function doResize() {
     canvas.width = 800;
     canvas.height = 600;
 }
 
-function resetConfetti() {
-    if (confettiManager) {
-        confettiManager.reset();
+function clearConfetti() {
+    if (confettiObj) {
+        confettiObj.reset();
     }
 }
 
-function showScreen(screenName) {
-    titleScreen.style.display = 'none';
-    setupScreen.style.display = 'none';
-    modeSelectScreen.style.display = 'none';
-    gameContainer.style.display = 'none';
-    overlay.style.display = 'none';
+function switchScreen(name) {
+    titleScrn.style.display = 'none';
+    setupScrn.style.display = 'none';
+    modeScrn.style.display = 'none';
+    gameWrap.style.display = 'none';
+    overlayBg.style.display = 'none';
     
-    resetConfetti();
+    clearConfetti();
 
-    if (screenName === 'title') titleScreen.style.display = 'flex';
-    if (screenName === 'setup') setupScreen.style.display = 'flex';
-    if (screenName === 'mode') modeSelectScreen.style.display = 'flex';
-    if (screenName === 'game') gameContainer.style.display = 'block';
+    if (name === 'title') titleScrn.style.display = 'flex';
+    if (name === 'setup') setupScrn.style.display = 'flex';
+    if (name === 'mode') modeScrn.style.display = 'flex';
+    if (name === 'game') gameWrap.style.display = 'block';
 }
 
-// === TARGET SYSTEM ===
-let targets = [];
+// balls
+let balls = [];
 
-function createTarget() {
-    const radius = 25;
-    const x = Math.random() * (canvas.width - radius * 2) + radius;
-    const y = Math.random() * (canvas.height - radius * 2) + radius;
-    const speed = Math.random() * 0.9 + 0.3;
-    const vx = speed * (Math.random() < 0.5 ? -1 : 1);
+function makeBall() {
+    const r = 25;
+    const x = Math.random() * (canvas.width - r * 2) + r;
+    const y = Math.random() * (canvas.height - r * 2) + r;
+    const s = Math.random() * 0.9 + 0.3;
+    const vx = s * (Math.random() < 0.5 ? -1 : 1);
     const vy = (Math.random() * 0.9 + 0.3) * (Math.random() < 0.5 ? -1 : 1);
     
     return { 
-        x, y, radius, vx, vy,
-        state: 'alive', 
-        animTime: 0,
-        particles: [] 
+        x, y, r, vx, vy,
+        status: 'alive', 
+        t: 0,
+        parts: [] 
     };
 }
 
-function resetTargets() {
-    targets = [];
-    for (let i = 0; i < NUM_TARGETS; i++) {
-        targets.push(createTarget());
+function resetBalls() {
+    balls = [];
+    for (let i = 0; i < 3; i++) {
+        balls.push(makeBall());
     }
 }
 
-function spawnTarget(index) {
-    targets[index] = createTarget();
+function respawn(i) {
+    balls[i] = makeBall();
 }
 
-function triggerBreakAnimation(t) {
-    t.state = 'dying';
-    t.animTime = 0;
-    t.particles = [];
+function breakBall(b) {
+    b.status = 'dying';
+    b.t = 0;
+    b.parts = [];
     
-    const numParticles = 12;
-    for (let i = 0; i < numParticles; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 100 + Math.random() * 150; 
-        t.particles.push({
-            x: t.x,
-            y: t.y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            life: HIT_ANIM_DURATION
+    for (let i = 0; i < 12; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 100 + Math.random() * 150; 
+        b.parts.push({
+            x: b.x,
+            y: b.y,
+            vx: Math.cos(ang) * spd,
+            vy: Math.sin(ang) * spd,
+            life: 0.3
         });
     }
 }
 
-function updateTargets(dt) {
-    const dtSeconds = dt / 1000;
+function moveBalls(dt) {
+    const sec = dt / 1000;
 
-    targets.forEach((t, index) => {
-        if (t.state === 'alive' && movingMode) {
-            t.x += t.vx * dt * 0.06;
-            t.y += t.vy * dt * 0.06;
-            if (t.x - t.radius < 0) { t.x = t.radius; t.vx *= -1; }
-            if (t.x + t.radius > canvas.width) { t.x = canvas.width - t.radius; t.vx *= -1; }
-            if (t.y - t.radius < 0) { t.y = t.radius; t.vy *= -1; }
-            if (t.y + t.radius > canvas.height) { t.y = canvas.height - t.radius; t.vy *= -1; }
+    balls.forEach((b, i) => {
+        if (b.status === 'alive' && moving) {
+            b.x += b.vx * dt * 0.06;
+            b.y += b.vy * dt * 0.06;
+            // bounce
+            if (b.x - b.r < 0) { b.x = b.r; b.vx *= -1; }
+            if (b.x + b.r > canvas.width) { b.x = canvas.width - b.r; b.vx *= -1; }
+            if (b.y - b.r < 0) { b.y = b.r; b.vy *= -1; }
+            if (b.y + b.r > canvas.height) { b.y = canvas.height - b.r; b.vy *= -1; }
         }
-        else if (t.state === 'dying') {
-            t.animTime += dtSeconds;
+        else if (b.status === 'dying') {
+            b.t += sec;
             
-            t.particles.forEach(p => {
-                p.x += p.vx * dtSeconds;
-                p.y += p.vy * dtSeconds;
-                p.life -= dtSeconds;
+            b.parts.forEach(p => {
+                p.x += p.vx * sec;
+                p.y += p.vy * sec;
+                p.life -= sec;
             });
 
-            if (t.animTime >= HIT_ANIM_DURATION) {
-                spawnTarget(index);
+            if (b.t >= 0.3) {
+                respawn(i);
             }
         }
     });
 }
 
-function drawTargets() {
-    targets.forEach(t => {
-        if (t.state === 'alive') {
+function render() {
+    balls.forEach(b => {
+        if (b.status === 'alive') {
             ctx.beginPath();
-            ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
-            ctx.fillStyle = targetColor;
+            ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+            ctx.fillStyle = ballColor;
             ctx.fill();
             ctx.lineWidth = 2;
         } 
-        else if (t.state === 'dying') {
-            const progress = t.animTime / HIT_ANIM_DURATION;
-            const alpha = Math.max(0, 1 - progress);
+        else if (b.status === 'dying') {
+            const prog = b.t / 0.3;
+            const alph = Math.max(0, 1 - prog);
 
             ctx.save();
-            ctx.globalAlpha = alpha;
+            ctx.globalAlpha = alph;
             ctx.beginPath();
-            ctx.arc(t.x, t.y, t.radius * (1 + progress * 0.3), 0, Math.PI * 2);
-            ctx.fillStyle = targetColor;
+            ctx.arc(b.x, b.y, b.r * (1 + prog * 0.3), 0, Math.PI * 2);
+            ctx.fillStyle = ballColor;
             ctx.fill();
             
-            t.particles.forEach(p => {
+            b.parts.forEach(p => {
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); 
-                ctx.fillStyle = targetColor;
+                ctx.fillStyle = ballColor;
                 ctx.fill();
             });
             ctx.restore();
@@ -209,91 +204,89 @@ function drawTargets() {
     });
 }
 
-// === GAME LOOP ===
-function startGame(modeType) {
-    if (modeType === 'static') movingMode = false;
-    else movingMode = true;
+function play(mode) {
+    if (mode === 'static') moving = false;
+    else moving = true;
 
     score = 0;
     combo = 0;
-    maxCombo = 0;
-    totalShots = 0;
-    totalHits = 0;
-    multiplier = 1;
-    timeLeft = gameDuration; 
+    bestCombo = 0;
+    shots = 0;
+    hits = 0;
+    mult = 1;
+    timeLeft = maxTime; 
     
-    running = true;
-    isPaused = false;
-    isResultsOpen = false;
+    gameActive = true;
+    paused = false;
     
-    resetConfetti();
+    clearConfetti();
 
-    if (timeProgressBar) timeProgressBar.style.width = "0%";
+    if (barFill) barFill.style.width = "0%";
 
-    scoreEl.innerText = score;
-    comboEl.innerText = combo;
-    if (multiplierEl) multiplierEl.innerText = "1x";
-    timerEl.innerText = timeLeft;
+    scoreTxt.innerText = score;
+    comboTxt.innerText = combo;
+    if (multTxt) multTxt.innerText = "1x";
+    timerTxt.innerText = timeLeft;
 
-    resetTargets();
-    showScreen('game');
+    resetBalls();
+    switchScreen('game');
     
-    lastTimestamp = performance.now();
-    cancelAnimationFrame(animationFrameId);
-    loop(lastTimestamp);
+    lastTime = performance.now();
+    cancelAnimationFrame(loopId);
+    loop(lastTime);
 }
 
-function loop(timestamp) {
-    if (!running) return;
-    if (isPaused) {
-        lastTimestamp = timestamp;
-        animationFrameId = requestAnimationFrame(loop);
+function loop(ts) {
+    if (!gameActive) return;
+    if (paused) {
+        lastTime = ts;
+        loopId = requestAnimationFrame(loop);
         return; 
     }
-    const dt = timestamp - lastTimestamp;
-    lastTimestamp = timestamp;
+    const dt = ts - lastTime;
+    lastTime = ts;
 
     timeLeft -= dt / 1000;
 
-    if (gameDuration > 0) {
-        const timeElapsed = gameDuration - timeLeft;
-        const percent = (timeElapsed / gameDuration) * 100;
-        if (timeProgressBar) {
-            timeProgressBar.style.width = Math.min(100, percent) + "%";
+    if (maxTime > 0) {
+        const elap = maxTime - timeLeft;
+        const per = (elap / maxTime) * 100;
+        if (barFill) {
+            barFill.style.width = Math.min(100, per) + "%";
         }
     }
 
     if (timeLeft <= 0) {
-        endGame();
+        gameOver();
         return;
     }
-    timerEl.innerText = Math.ceil(timeLeft);
+    timerTxt.innerText = Math.ceil(timeLeft);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    updateTargets(dt);
-    drawTargets();
+    moveBalls(dt);
+    render();
 
-    animationFrameId = requestAnimationFrame(loop);
+    loopId = requestAnimationFrame(loop);
 }
 
-function endGame() {
-    running = false;
-    isResultsOpen = true;
+function gameOver() {
+    gameActive = false;
 
-    const accuracy = totalShots > 0 ? ((totalHits / totalShots) * 100).toFixed(1) : "0.0";
+    const acc = shots > 0 ? ((hits / shots) * 100).toFixed(1) : "0.0";
     
-    document.getElementById('finalScore').innerText = score;
-    document.getElementById('finalCombo').innerText = maxCombo;
-    document.getElementById('finalAccuracy').innerText = accuracy + "%";
+    document.getElementById('end-score').innerText = score;
+    document.getElementById('end-combo').innerText = bestCombo;
+    document.getElementById('end-acc').innerText = acc + "%";
 
-    overlay.style.display = 'flex';
-    document.getElementById('taskCompleteMenu').style.display = 'flex';
-    document.getElementById('pauseMenu').style.display = 'none';
-    document.getElementById('settingsMenu').style.display = 'none';
+    overlayBg.style.display = 'flex';
+    document.getElementById('end-menu').style.display = 'flex';
+    document.getElementById('pause-menu').style.display = 'none';
+    document.getElementById('settings-menu').style.display = 'none';
+    document.getElementById('credits-panel').style.display = 'none';
     
-    if (confettiManager) {
-        confettiManager.reset(); 
-        confettiManager({ 
+    if (confettiObj) {
+        confettiObj.reset(); 
+        confettiObj({ 
             particleCount: 150, 
             spread: 100, 
             origin: { y: 0.6 }, 
@@ -302,249 +295,294 @@ function endGame() {
     }
 }
 
-// === INPUT HANDLING ===
-function attemptHit(inputX, inputY) {
-    if (!running || isPaused) return;
+// input
+function checkHit(x, y) {
+    if (!gameActive || paused) return;
     
-    totalShots++; 
-    let hit = false;
+    shots++; 
+    let gotOne = false;
     
-    for (let i = targets.length - 1; i >= 0; i--) {
-        const t = targets[i];
+    for (let i = balls.length - 1; i >= 0; i--) {
+        const b = balls[i];
         
-        if (t.state === 'dying') continue; 
+        if (b.status === 'dying') continue; 
 
-        const dist = Math.hypot(inputX - t.x, inputY - t.y);
-        if (dist < t.radius) {
-            hit = true;
+        const d = Math.hypot(x - b.x, y - b.y);
+        if (d < b.r) {
+            gotOne = true;
             
-            let soundToPlay = (currentSoundType === 'bubble') ? sfxBubble : sfxShoot;
-            soundToPlay.currentTime = 0; 
-            soundToPlay.play();
+            let snd = (soundType === 'bubble') ? popSound : shotSound;
+            snd.currentTime = 0; 
+            snd.play();
 
-            totalHits++; 
+            hits++; 
             
             combo++;
-            if (combo > maxCombo) maxCombo = combo;
+            if (combo > bestCombo) bestCombo = combo;
             
-            multiplier = 1 + Math.floor(combo / 5);
+            mult = 1 + Math.floor(combo / 5);
             
-            score += 2 * multiplier;
+            score += 2 * mult;
             
-            if (useBreakAnim) {
-                triggerBreakAnimation(t);
+            if (doBreakAnim) {
+                breakBall(b);
             } else {
-                spawnTarget(i);
+                respawn(i);
             }
             
             break; 
         }
     }
     
-    if (!hit) {
+    if (!gotOne) {
         combo = 0;
-        multiplier = 1;
+        mult = 1;
         score = Math.max(0, score - 1);
     }
     
-    scoreEl.innerText = score;
-    comboEl.innerText = combo;
-    if (multiplierEl) multiplierEl.innerText = multiplier + "x";
+    scoreTxt.innerText = score;
+    comboTxt.innerText = combo;
+    if (multTxt) multTxt.innerText = mult + "x";
 }
 
-canvas.addEventListener('mousedown', () => attemptHit(mouseX, mouseY));
+canvas.addEventListener('mousedown', () => checkHit(mx, my));
 canvas.addEventListener('mousemove', e => {
-    const rect = canvas.getBoundingClientRect();
-    mouseX = e.clientX - rect.left;
-    mouseY = e.clientY - rect.top;
+    const r = canvas.getBoundingClientRect();
+    mx = e.clientX - r.left;
+    my = e.clientY - r.top;
 });
 window.addEventListener('keydown', e => {
-    if (e.code === 'Escape' && running) togglePause();
-    if (osuMode && running && !isPaused && (e.code === 'KeyZ' || e.code === 'KeyX')) attemptHit(mouseX, mouseY);
+    if (e.code === 'Escape' && gameActive) togglePause();
+    if (osuKeys && gameActive && !paused && (e.code === 'KeyZ' || e.code === 'KeyX')) checkHit(mx, my);
 });
 
-// === INTRO & NAVIGATION ===
+// intro
 document.addEventListener('DOMContentLoaded', () => {
-    const vidIntro = document.getElementById('vidIntro');
-    const imgIdle = document.getElementById('imgIdle');
-    const vidOutro = document.getElementById('vidOutro');
-    const mediaContainer = document.getElementById('mediaSequence');
-    const mainPlayBtn = document.getElementById('mainPlayBtn');
+    const v1 = document.getElementById('vid-intro');
+    const img = document.getElementById('img-idle');
+    const v2 = document.getElementById('vid-outro');
+    const playBtn = document.getElementById('play-now');
     
-    function onIntroComplete() {
-        vidIntro.style.display = 'none';
-        if (imgIdle) imgIdle.style.display = 'block'; 
-        titleScreen.style.display = 'flex'; 
+    function doneIntro() {
+        v1.style.display = 'none';
+        if (img) img.style.display = 'block'; 
+        titleScrn.style.display = 'flex'; 
     }
 
-    if (vidIntro) {
-        vidIntro.addEventListener('ended', onIntroComplete);
-        if (vidIntro.ended) onIntroComplete();
+    if (v1) {
+        v1.addEventListener('ended', doneIntro);
+        if (v1.ended) doneIntro();
     }
 
-    if (mainPlayBtn) {
-        mainPlayBtn.onclick = () => {
-            titleScreen.style.display = 'none';
-            if (imgIdle) imgIdle.style.display = 'none'; 
+    if (playBtn) {
+        playBtn.onclick = () => {
+            titleScrn.style.display = 'none';
+            if (img) img.style.display = 'none'; 
             
-            if (vidOutro) {
-                vidOutro.style.display = 'block'; 
-                vidOutro.play();
+            if (v2) {
+                v2.style.display = 'block'; 
+                v2.play();
             } else {
-                showScreen('setup');
+                switchScreen('setup');
             }
         };
     }
 
-    if (vidOutro) {
-        vidOutro.addEventListener('ended', () => {
-            vidOutro.style.display = 'none';
-            showScreen('setup');
+    if (v2) {
+        v2.addEventListener('ended', () => {
+            v2.style.display = 'none';
+            switchScreen('setup');
         });
     }
 });
 
-// === MENU INTERACTION ===
-document.getElementById('btnGoToModes').onclick = () => {
-    showScreen('mode');
+// credits
+document.getElementById('credit-link').onclick = () => {
+    overlayBg.style.display = 'flex';
+    document.getElementById('credits-panel').style.display = 'flex';
+    document.getElementById('settings-menu').style.display = 'none';
+    document.getElementById('pause-menu').style.display = 'none';
+    document.getElementById('end-menu').style.display = 'none';
 };
 
-document.getElementById('backToSetupBtn').onclick = () => {
-    showScreen('setup');
+document.getElementById('close-creds').onclick = () => {
+    document.getElementById('credits-panel').style.display = 'none';
+    overlayBg.style.display = 'none';
 };
 
-document.getElementById('btnOpenSettingsFromSetup').onclick = () => {
-    settingsOrigin = 'setup';
-    overlay.style.display = 'flex';
-    document.getElementById('settingsMenu').style.display = 'flex';
-    document.getElementById('pauseMenu').style.display = 'none';
-    document.getElementById('taskCompleteMenu').style.display = 'none';
+// nav
+document.getElementById('next-btn').onclick = () => {
+    switchScreen('mode');
 };
 
-function updateModeUI() {
-    if (selectedMode === 'static') {
-        btnStatic.classList.add('selected-mode');
-        btnDynamic.classList.remove('selected-mode');
+document.getElementById('setup-back').onclick = () => {
+    switchScreen('setup');
+};
+
+document.getElementById('setup-settings').onclick = () => {
+    fromMenu = 'setup';
+    overlayBg.style.display = 'flex';
+    document.getElementById('settings-menu').style.display = 'flex';
+    document.getElementById('pause-menu').style.display = 'none';
+    document.getElementById('end-menu').style.display = 'none';
+};
+
+// mode ui
+function uiUpdate() {
+    if (currentMode === 'static') {
+        staBtn.classList.add('active');
+        dynBtn.classList.remove('active');
     } else {
-        btnDynamic.classList.add('selected-mode');
-        btnStatic.classList.remove('selected-mode');
+        dynBtn.classList.add('active');
+        staBtn.classList.remove('active');
     }
 }
 
-btnDynamic.onclick = () => {
-    selectedMode = 'dynamic';
-    updateModeUI();
+dynBtn.onclick = () => {
+    currentMode = 'dynamic';
+    uiUpdate();
 };
 
-btnStatic.onclick = () => {
-    selectedMode = 'static';
-    updateModeUI();
+staBtn.onclick = () => {
+    currentMode = 'static';
+    uiUpdate();
 };
 
-btnStartGame.onclick = () => {
-    startGame(selectedMode);
+startBtn.onclick = () => {
+    play(currentMode);
 };
 
-const btnTimeToggle = document.getElementById('btnTimeToggle');
-const timeTitle = document.getElementById('timeTitle');
-const timeDesc = document.getElementById('timeDesc');
+const timeBtn = document.getElementById('time-toggle');
+const tTitle = document.getElementById('time-title');
+const tDesc = document.getElementById('time-desc');
 
-if (btnTimeToggle) {
-    btnTimeToggle.onclick = () => {
-        if (gameDuration === 60) {
-            gameDuration = 30;
-            timeTitle.innerText = "⚡ QUICK PLAY";
-            timeDesc.innerText = "Time: 30s";
-            btnTimeToggle.classList.remove('purple-card');
-            btnTimeToggle.classList.add('gold-card');
+if (timeBtn) {
+    timeBtn.onclick = () => {
+        if (maxTime === 60) {
+            maxTime = 30;
+            tTitle.innerText = "⚡ QUICK PLAY";
+            tDesc.innerText = "Time: 30s";
+            timeBtn.classList.remove('card-purp');
+            timeBtn.classList.add('card-gold');
         } else {
-            gameDuration = 60;
-            timeTitle.innerText = "⏱️ STANDARD";
-            timeDesc.innerText = "Time: 60s";
-            btnTimeToggle.classList.remove('gold-card');
-            btnTimeToggle.classList.add('purple-card');
+            maxTime = 60;
+            tTitle.innerText = "⏱️ STANDARD";
+            tDesc.innerText = "Time: 60s";
+            timeBtn.classList.remove('card-gold');
+            timeBtn.classList.add('card-purp');
         }
     };
 }
 
-// === PAUSE SYSTEM ===
+// pause
 function togglePause() {
-    isPaused = !isPaused;
-    const pauseMenu = document.getElementById('pauseMenu');
-    const settingsMenu = document.getElementById('settingsMenu');
-    const taskCompleteMenu = document.getElementById('taskCompleteMenu');
+    paused = !paused;
+    const pMenu = document.getElementById('pause-menu');
+    const sMenu = document.getElementById('settings-menu');
+    const eMenu = document.getElementById('end-menu');
     
-    resetConfetti();
+    clearConfetti();
 
-    if (isPaused) {
-        overlay.style.display = 'flex';
-        pauseMenu.style.display = 'flex';
-        settingsMenu.style.display = 'none';
-        taskCompleteMenu.style.display = 'none'; 
+    if (paused) {
+        overlayBg.style.display = 'flex';
+        pMenu.style.display = 'flex';
+        sMenu.style.display = 'none';
+        eMenu.style.display = 'none'; 
+        document.getElementById('credits-panel').style.display = 'none';
     } else {
-        overlay.style.display = 'none';
+        overlayBg.style.display = 'none';
     }
 }
-document.getElementById('resumeBtn').onclick = togglePause;
-document.getElementById('btnPauseRestart').onclick = () => { togglePause(); startGame(selectedMode); }; 
-document.getElementById('quitBtn').onclick = () => { togglePause(); running = false; showScreen('mode'); };
+document.getElementById('resume-btn').onclick = togglePause;
+document.getElementById('restart-btn').onclick = () => { togglePause(); play(currentMode); }; 
+document.getElementById('quit-btn').onclick = () => { togglePause(); gameActive = false; switchScreen('mode'); };
 
-// === SETTINGS & RESULTS NAVIGATION ===
-const modeSettingsBtn = document.getElementById('modeSettingsBtn');
-if (modeSettingsBtn) {
-    modeSettingsBtn.onclick = () => {
-        settingsOrigin = 'mode';
-        overlay.style.display = 'flex';
-        document.getElementById('settingsMenu').style.display = 'flex';
-        document.getElementById('pauseMenu').style.display = 'none';
-        document.getElementById('taskCompleteMenu').style.display = 'none';
+// settings
+const modeSetBtn = document.getElementById('mode-set-btn');
+if (modeSetBtn) {
+    modeSetBtn.onclick = () => {
+        fromMenu = 'mode';
+        overlayBg.style.display = 'flex';
+        document.getElementById('settings-menu').style.display = 'flex';
+        document.getElementById('pause-menu').style.display = 'none';
+        document.getElementById('end-menu').style.display = 'none';
     };
 }
-document.getElementById('settingsBtn').onclick = () => {
-    settingsOrigin = 'pause';
-    document.getElementById('pauseMenu').style.display = 'none';
-    document.getElementById('settingsMenu').style.display = 'flex';
+document.getElementById('open-set').onclick = () => {
+    fromMenu = 'pause';
+    document.getElementById('pause-menu').style.display = 'none';
+    document.getElementById('settings-menu').style.display = 'flex';
 };
-document.getElementById('btnTaskSettings').onclick = () => {
-    settingsOrigin = 'task';
-    document.getElementById('taskCompleteMenu').style.display = 'none';
-    document.getElementById('settingsMenu').style.display = 'flex';
+document.getElementById('task-set').onclick = () => {
+    fromMenu = 'task';
+    document.getElementById('end-menu').style.display = 'none';
+    document.getElementById('settings-menu').style.display = 'flex';
 };
 
-document.getElementById('backBtn').onclick = () => {
-    document.getElementById('settingsMenu').style.display = 'none';
-    overlay.style.display = 'none'; 
+document.getElementById('back-set').onclick = () => {
+    document.getElementById('settings-menu').style.display = 'none';
+    overlayBg.style.display = 'none'; 
     
-    if (settingsOrigin === 'pause') {
-        overlay.style.display = 'flex';
-        document.getElementById('pauseMenu').style.display = 'flex';
-    } else if (settingsOrigin === 'task') {
-        overlay.style.display = 'flex';
-        document.getElementById('taskCompleteMenu').style.display = 'flex';
+    if (fromMenu === 'pause') {
+        overlayBg.style.display = 'flex';
+        document.getElementById('pause-menu').style.display = 'flex';
+    } else if (fromMenu === 'task') {
+        overlayBg.style.display = 'flex';
+        document.getElementById('end-menu').style.display = 'flex';
     } 
 };
 
-document.getElementById('btnTaskRetry').onclick = () => {
-    overlay.style.display = 'none';
-    resetConfetti(); 
-    startGame(selectedMode);
+document.getElementById('retry-btn').onclick = () => {
+    overlayBg.style.display = 'none';
+    clearConfetti(); 
+    play(currentMode);
 };
-document.getElementById('btnTaskMode').onclick = () => {
-    overlay.style.display = 'none';
-    resetConfetti(); 
-    showScreen('mode');
-};
-
-document.getElementById('osuToggle').onchange = (e) => osuMode = e.target.checked;
-document.getElementById('colorPicker').oninput = (e) => targetColor = e.target.value;
-document.getElementById('soundPicker').onchange = (e) => {
-    currentSoundType = e.target.value;
-    let preview = (currentSoundType === 'bubble') ? sfxBubble : sfxShoot;
-    preview.currentTime = 0;
-    preview.play();
-};
-document.getElementById('breakAnimToggle').onchange = (e) => {
-    useBreakAnim = e.target.checked;
+document.getElementById('menu-btn').onclick = () => {
+    overlayBg.style.display = 'none';
+    clearConfetti(); 
+    switchScreen('mode');
 };
 
-init();
+document.getElementById('osu-box').onchange = (e) => osuKeys = e.target.checked;
+document.getElementById('col-pick').oninput = (e) => ballColor = e.target.value;
+document.getElementById('snd-pick').onchange = (e) => {
+    soundType = e.target.value;
+    let s = (soundType === 'bubble') ? popSound : shotSound;
+    s.currentTime = 0;
+    s.play();
+};
+document.getElementById('brk-box').onchange = (e) => {
+    doBreakAnim = e.target.checked;
+};
+
+// carousel logic
+let slideIdx = 1;
+
+function moveSlide(n) {
+  showSlides(slideIdx += n);
+}
+
+function currentSlide(n) {
+  showSlides(slideIdx = n);
+}
+
+function showSlides(n) {
+  let i;
+  let slides = document.getElementsByClassName("my-slide");
+  let dots = document.getElementsByClassName("dot");
+  
+  if (n > slides.length) {slideIdx = 1}
+  if (n < 1) {slideIdx = slides.length}
+  
+  for (i = 0; i < slides.length; i++) {
+    slides[i].style.display = "none";
+  }
+  for (i = 0; i < dots.length; i++) {
+    dots[i].className = dots[i].className.replace(" active-dot", "");
+  }
+  
+  slides[slideIdx-1].style.display = "block";
+  dots[slideIdx-1].className += " active-dot";
+}
+
+setup();
