@@ -142,6 +142,11 @@ body {
   pointer-events: none; 
 }
 
+#mode-screen {
+    flex-direction: column;
+    gap: 10px;
+}
+
 #overlay-bg {
   display: none; 
   position: fixed;
