@@ -3,7 +3,6 @@
 **AimSistent** is a lightweight, browser-based aim trainer designed to help players warm up and improve their mouse accuracy and reaction time. Built entirely with vanilla HTML, CSS, and JavaScript.
 
 ![AimSistent Banner](aimsistenttextlogo.png)
-*(Note: If you don't have a banner image, you can remove this line)*
 
 ## ✨ Features
 
