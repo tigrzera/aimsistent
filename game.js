@@ -10,16 +10,23 @@ sfxBubble.volume = 0.5;
 sfxShoot.volume = 0.3;
 
 const NUM_TARGETS = 3;
+const HIT_ANIM_DURATION = 0.3; 
 
 // === DOM ELEMENTS ===
 const titleScreen = document.getElementById('titleScreen');
+const setupScreen = document.getElementById('setupScreen'); 
 const modeSelectScreen = document.getElementById('modeSelectScreen');
 const gameContainer = document.getElementById('gameContainer');
 const overlay = document.getElementById('overlay');
 const scoreEl = document.getElementById('score');
 const comboEl = document.getElementById('combo');
+const multiplierEl = document.getElementById('multiplier');
 const timerEl = document.getElementById('timer');
 const timeProgressBar = document.getElementById('timeProgressBar');
+
+const btnDynamic = document.getElementById('btnDynamic');
+const btnStatic = document.getElementById('btnStatic');
+const btnStartGame = document.getElementById('btnStartGame');
 
 // === GAME STATE ===
 let score = 0;
@@ -38,12 +45,16 @@ let movingMode = true;
 let lastTimestamp = 0;
 let animationFrameId;
 
+let selectedMode = 'static'; 
+
 // === SETTINGS STATE ===
 let osuMode = false;
+let useBreakAnim = true; 
 let targetColor = "#ff0000ff";
 let currentSoundType = 'bubble'; 
 let mouseX = 0;
 let mouseY = 0;
+let settingsOrigin = 'pause'; 
 
 // === CONFETTI MANAGER ===
 let confettiManager = null;
@@ -60,6 +71,8 @@ function init() {
             useWorker: true
         });
     }
+    
+    updateModeUI();
 }
 
 function resize() {
@@ -75,6 +88,7 @@ function resetConfetti() {
 
 function showScreen(screenName) {
     titleScreen.style.display = 'none';
+    setupScreen.style.display = 'none';
     modeSelectScreen.style.display = 'none';
     gameContainer.style.display = 'none';
     overlay.style.display = 'none';
@@ -82,6 +96,7 @@ function showScreen(screenName) {
     resetConfetti();
 
     if (screenName === 'title') titleScreen.style.display = 'flex';
+    if (screenName === 'setup') setupScreen.style.display = 'flex';
     if (screenName === 'mode') modeSelectScreen.style.display = 'flex';
     if (screenName === 'game') gameContainer.style.display = 'block';
 }
@@ -96,7 +111,13 @@ function createTarget() {
     const speed = Math.random() * 0.9 + 0.3;
     const vx = speed * (Math.random() < 0.5 ? -1 : 1);
     const vy = (Math.random() * 0.9 + 0.3) * (Math.random() < 0.5 ? -1 : 1);
-    return { x, y, radius, vx, vy };
+    
+    return { 
+        x, y, radius, vx, vy,
+        state: 'alive', 
+        animTime: 0,
+        particles: [] 
+    };
 }
 
 function resetTargets() {
@@ -110,25 +131,81 @@ function spawnTarget(index) {
     targets[index] = createTarget();
 }
 
+function triggerBreakAnimation(t) {
+    t.state = 'dying';
+    t.animTime = 0;
+    t.particles = [];
+    
+    const numParticles = 12;
+    for (let i = 0; i < numParticles; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 100 + Math.random() * 150; 
+        t.particles.push({
+            x: t.x,
+            y: t.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: HIT_ANIM_DURATION
+        });
+    }
+}
+
 function updateTargets(dt) {
-    if (!movingMode) return;
-    targets.forEach(t => {
-        t.x += t.vx * dt * 0.06;
-        t.y += t.vy * dt * 0.06;
-        if (t.x - t.radius < 0) { t.x = t.radius; t.vx *= -1; }
-        if (t.x + t.radius > canvas.width) { t.x = canvas.width - t.radius; t.vx *= -1; }
-        if (t.y - t.radius < 0) { t.y = t.radius; t.vy *= -1; }
-        if (t.y + t.radius > canvas.height) { t.y = canvas.height - t.radius; t.vy *= -1; }
+    const dtSeconds = dt / 1000;
+
+    targets.forEach((t, index) => {
+        if (t.state === 'alive' && movingMode) {
+            t.x += t.vx * dt * 0.06;
+            t.y += t.vy * dt * 0.06;
+            if (t.x - t.radius < 0) { t.x = t.radius; t.vx *= -1; }
+            if (t.x + t.radius > canvas.width) { t.x = canvas.width - t.radius; t.vx *= -1; }
+            if (t.y - t.radius < 0) { t.y = t.radius; t.vy *= -1; }
+            if (t.y + t.radius > canvas.height) { t.y = canvas.height - t.radius; t.vy *= -1; }
+        }
+        else if (t.state === 'dying') {
+            t.animTime += dtSeconds;
+            
+            t.particles.forEach(p => {
+                p.x += p.vx * dtSeconds;
+                p.y += p.vy * dtSeconds;
+                p.life -= dtSeconds;
+            });
+
+            if (t.animTime >= HIT_ANIM_DURATION) {
+                spawnTarget(index);
+            }
+        }
     });
 }
 
 function drawTargets() {
     targets.forEach(t => {
-        ctx.beginPath();
-        ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
-        ctx.fillStyle = targetColor;
-        ctx.fill();
-        ctx.lineWidth = 2;
+        if (t.state === 'alive') {
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+            ctx.fillStyle = targetColor;
+            ctx.fill();
+            ctx.lineWidth = 2;
+        } 
+        else if (t.state === 'dying') {
+            const progress = t.animTime / HIT_ANIM_DURATION;
+            const alpha = Math.max(0, 1 - progress);
+
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, t.radius * (1 + progress * 0.3), 0, Math.PI * 2);
+            ctx.fillStyle = targetColor;
+            ctx.fill();
+            
+            t.particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); 
+                ctx.fillStyle = targetColor;
+                ctx.fill();
+            });
+            ctx.restore();
+        }
     });
 }
 
@@ -155,6 +232,7 @@ function startGame(modeType) {
 
     scoreEl.innerText = score;
     comboEl.innerText = combo;
+    if (multiplierEl) multiplierEl.innerText = "1x";
     timerEl.innerText = timeLeft;
 
     resetTargets();
@@ -212,7 +290,7 @@ function endGame() {
     document.getElementById('taskCompleteMenu').style.display = 'flex';
     document.getElementById('pauseMenu').style.display = 'none';
     document.getElementById('settingsMenu').style.display = 'none';
-
+    
     if (confettiManager) {
         confettiManager.reset(); 
         confettiManager({ 
@@ -233,6 +311,9 @@ function attemptHit(inputX, inputY) {
     
     for (let i = targets.length - 1; i >= 0; i--) {
         const t = targets[i];
+        
+        if (t.state === 'dying') continue; 
+
         const dist = Math.hypot(inputX - t.x, inputY - t.y);
         if (dist < t.radius) {
             hit = true;
@@ -242,21 +323,33 @@ function attemptHit(inputX, inputY) {
             soundToPlay.play();
 
             totalHits++; 
-            score += 2 * multiplier;
+            
             combo++;
             if (combo > maxCombo) maxCombo = combo;
-            if (combo % 5 === 0) multiplier++;
-            spawnTarget(i);
+            
+            multiplier = 1 + Math.floor(combo / 5);
+            
+            score += 2 * multiplier;
+            
+            if (useBreakAnim) {
+                triggerBreakAnimation(t);
+            } else {
+                spawnTarget(i);
+            }
+            
             break; 
         }
     }
+    
     if (!hit) {
-        score = Math.max(0, score - 1);
         combo = 0;
         multiplier = 1;
+        score = Math.max(0, score - 1);
     }
+    
     scoreEl.innerText = score;
-    comboEl.innerText = combo + "x";
+    comboEl.innerText = combo;
+    if (multiplierEl) multiplierEl.innerText = multiplier + "x";
 }
 
 canvas.addEventListener('mousedown', () => attemptHit(mouseX, mouseY));
@@ -293,30 +386,64 @@ document.addEventListener('DOMContentLoaded', () => {
         mainPlayBtn.onclick = () => {
             titleScreen.style.display = 'none';
             if (imgIdle) imgIdle.style.display = 'none'; 
+            
             if (vidOutro) {
                 vidOutro.style.display = 'block'; 
                 vidOutro.play();
             } else {
-                showScreen('mode');
+                showScreen('setup');
             }
         };
     }
 
     if (vidOutro) {
         vidOutro.addEventListener('ended', () => {
-            mediaContainer.classList.add('fade-out-sequence');
-            showScreen('mode');
-            setTimeout(() => {
-                mediaContainer.style.display = 'none';
-            }, 1000);
+            vidOutro.style.display = 'none';
+            showScreen('setup');
         });
     }
 });
 
 // === MENU INTERACTION ===
-document.getElementById('btnDynamic').onclick = () => startGame('dynamic');
-document.getElementById('btnStatic').onclick = () => startGame('static');
-document.getElementById('backToTitleBtn').onclick = () => location.reload();
+document.getElementById('btnGoToModes').onclick = () => {
+    showScreen('mode');
+};
+
+document.getElementById('backToSetupBtn').onclick = () => {
+    showScreen('setup');
+};
+
+document.getElementById('btnOpenSettingsFromSetup').onclick = () => {
+    settingsOrigin = 'setup';
+    overlay.style.display = 'flex';
+    document.getElementById('settingsMenu').style.display = 'flex';
+    document.getElementById('pauseMenu').style.display = 'none';
+    document.getElementById('taskCompleteMenu').style.display = 'none';
+};
+
+function updateModeUI() {
+    if (selectedMode === 'static') {
+        btnStatic.classList.add('selected-mode');
+        btnDynamic.classList.remove('selected-mode');
+    } else {
+        btnDynamic.classList.add('selected-mode');
+        btnStatic.classList.remove('selected-mode');
+    }
+}
+
+btnDynamic.onclick = () => {
+    selectedMode = 'dynamic';
+    updateModeUI();
+};
+
+btnStatic.onclick = () => {
+    selectedMode = 'static';
+    updateModeUI();
+};
+
+btnStartGame.onclick = () => {
+    startGame(selectedMode);
+};
 
 const btnTimeToggle = document.getElementById('btnTimeToggle');
 const timeTitle = document.getElementById('timeTitle');
@@ -359,13 +486,14 @@ function togglePause() {
     }
 }
 document.getElementById('resumeBtn').onclick = togglePause;
-document.getElementById('btnPauseRestart').onclick = () => { togglePause(); startGame(movingMode ? 'dynamic' : 'static'); };
+document.getElementById('btnPauseRestart').onclick = () => { togglePause(); startGame(selectedMode); }; 
 document.getElementById('quitBtn').onclick = () => { togglePause(); running = false; showScreen('mode'); };
 
 // === SETTINGS & RESULTS NAVIGATION ===
 const modeSettingsBtn = document.getElementById('modeSettingsBtn');
 if (modeSettingsBtn) {
     modeSettingsBtn.onclick = () => {
+        settingsOrigin = 'mode';
         overlay.style.display = 'flex';
         document.getElementById('settingsMenu').style.display = 'flex';
         document.getElementById('pauseMenu').style.display = 'none';
@@ -373,29 +501,33 @@ if (modeSettingsBtn) {
     };
 }
 document.getElementById('settingsBtn').onclick = () => {
+    settingsOrigin = 'pause';
     document.getElementById('pauseMenu').style.display = 'none';
     document.getElementById('settingsMenu').style.display = 'flex';
 };
 document.getElementById('btnTaskSettings').onclick = () => {
+    settingsOrigin = 'task';
     document.getElementById('taskCompleteMenu').style.display = 'none';
     document.getElementById('settingsMenu').style.display = 'flex';
 };
 
 document.getElementById('backBtn').onclick = () => {
     document.getElementById('settingsMenu').style.display = 'none';
-    if (running) {
+    overlay.style.display = 'none'; 
+    
+    if (settingsOrigin === 'pause') {
+        overlay.style.display = 'flex';
         document.getElementById('pauseMenu').style.display = 'flex';
-    } else if (isResultsOpen) {
+    } else if (settingsOrigin === 'task') {
+        overlay.style.display = 'flex';
         document.getElementById('taskCompleteMenu').style.display = 'flex';
-    } else {
-        overlay.style.display = 'none';
-    }
+    } 
 };
 
 document.getElementById('btnTaskRetry').onclick = () => {
     overlay.style.display = 'none';
     resetConfetti(); 
-    startGame(movingMode ? 'dynamic' : 'static');
+    startGame(selectedMode);
 };
 document.getElementById('btnTaskMode').onclick = () => {
     overlay.style.display = 'none';
@@ -410,6 +542,9 @@ document.getElementById('soundPicker').onchange = (e) => {
     let preview = (currentSoundType === 'bubble') ? sfxBubble : sfxShoot;
     preview.currentTime = 0;
     preview.play();
+};
+document.getElementById('breakAnimToggle').onchange = (e) => {
+    useBreakAnim = e.target.checked;
 };
 
 init();
