@@ -1,55 +1,41 @@
-# AimSistent
-The Aim Training Browser Game
+# AimSistent 🎯
 
-# 1. Getting Started
-**The Intro:** When the site loads, an intro video plays. Once it finishes, you will see the Idle Screen.
+**AimSistent** is a lightweight, browser-based aim trainer designed to help players warm up and improve their mouse accuracy and reaction time. Built entirely with vanilla HTML, CSS, and JavaScript.
 
-**Start:** Click the PLAY button in the center of the screen to trigger the transition into the Main Menu.
+![AimSistent Banner](aimsistenttextlogo.png)
+*(Note: If you don't have a banner image, you can remove this line)*
 
-# 2. Game Modes
-You can choose how you want to train from the Mode Selection screen:
+## ✨ Features
 
-**Dynamic Mode:** Targets move across the screen and bounce off walls. Good for tracking practice.
+- **Two Game Modes:**
+  - **Dynamic:** Targets move and bounce off walls for tracking practice.
+  - **Static:** Targets appear in random locations for flicking practice.
+- **Flexible Timing:** Choose between **Standard (60s)** or **Quick Play (30s)**.
+- **Combo & Multiplier System:**
+  - Build combos to increase your score.
+  - Every **5 consecutive hits** increases your score multiplier.
+  - Misses reset your combo and multiplier immediately.
+- **Customizable Settings:**
+  - Change target colors.
+  - Toggle "Break Animations" (particle effects on hit).
+  - Enable **Keyboard Shooting** (Z / X keys) for osu! style play.
+  - Select different hit sounds (Pop vs Knock).
+- **Polished UI:** Full intro/outro video support, clean dark-mode interface, and confetti celebrations on task completion.
 
-**Static Mode:** Targets appear in random locations but stay stationary. Good for flicking practice.
+## 🕹️ How to Play
 
-**Time Settings:** Click the Standard / Quick Play bar at the bottom to toggle between:
+1. **Launch the Game:** Click `PLAY` on the title screen.
+2. **Setup:** Review the tutorial and check your settings in the setup menu.
+3. **Select Mode:** Choose between **Dynamic** or **Static**, and toggle your time limit.
+4. **Start:** Click `START GAME`.
+5. **Gameplay:**
+   - **Click** (or press Z/X) on the targets before they disappear or move.
+   - **Pause:** Press `ESC` at any time to pause the game, adjust settings, or restart.
 
-**⏱️ Standard:** 60 Seconds (Purple)
+## 🚀 Installation & Usage
 
-**⚡ Quick Play:** 30 Seconds (Yellow)
+To run AimSistent locally, you simply need a web browser.
 
-# 3. Controls & Gameplay
-**Shooting:** Click the Left Mouse Button on a red target to destroy it.
-
-**Keyboard Alternative:** You can enable Z/X Keys in the settings to shoot using your keyboard instead of clicking (similar to osu!).
-
-**Scoring:**
-
-**Score:** Points earned for every hit.
-
-**Combo:** Hitting targets in a row increases your multiplier. Missing a shot resets your combo to 0.
-
-**Accuracy:** Your hit percentage is calculated at the end of the round.
-
-**Pausing:** Press ESC or click the Pause Button (top right) to freeze the game.
-
-# 4. Customization (Settings)
-You can access the Settings Menu from the Main Menu, Pause Screen, or Results Screen to tweak the experience:
-
-**Enable Z/X:** Toggles keyboard shooting on or off.
-
-**Target Color:** Use the color picker to change the targets from Red to any color you prefer.
-
-**Hit Sound:** Choose between two sound effects:
-
-**Pop:** A quick bubble sound.
-
-**Knock:** A satisfying wood sound.
-
-# 5. Game Over
-When the time runs out (visualized by the blue progress bar at the bottom), the round ends.
-
-A Task Completed card appears showing your Final Score, Max Combo, and Accuracy.
-
-**Confetti:** If you finish a round, a confetti celebration triggers behind the scorecard!
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/yourusername/aimsistent.git](https://github.com/yourusername/aimsistent.git)
