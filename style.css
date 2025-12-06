@@ -1,13 +1,14 @@
 /* === VARIABLES & GLOBAL RESET === */
 :root {
-  --bg: #0f0f0f;
-  --panel: #141414;
+  --bg: #0f0f0f; 
+  --panel: #141414; 
   --text: #cfcfcf;
-  --accent: #777; 
-  --border: #2a2a2a;
+  --accent: #ff0000; 
+  --border: #444; 
   --button-bg: #1a1a1a;
   --button-hover: #222;
-  --button-text: #cfcfcf;
+  --button-text: #fff;
+  --inset-bg: #0a0a0a;
 }
 
 body {
@@ -19,14 +20,34 @@ body {
   overflow: hidden;
 }
 
-/* === GAME CONTAINER & LAYOUT === */
+/* === BACKGROUND MEDIA === */
+.fullscreen-media {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; 
+    background-color: var(--bg); 
+}
+
+.fullscreen-media video, 
+.fullscreen-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 1; 
+}
+
+/* === GAME CONTAINER === */
 #gameContainer {
     position: relative;
     width: 100%;
     height: 100%;
+    z-index: 10; 
 }
 
-/* Center Wrapper: Holds Header, Canvas, and Progress Bar */
 #canvasWrapper {
   position: absolute;
   top: 50%;
@@ -35,84 +56,94 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px; /* Gap between Header, Canvas, and Bar */
+  gap: 10px; 
 }
 
-/* === NEW: GAME HEADER (Logo + Stats) === */
+/* === GAME HEADER === */
 #gameHeader {
     display: flex;
-    justify-content: space-between; /* Pushes Logo left, Stats right */
+    justify-content: space-between; 
     align-items: center;
-    width: 800px; /* Matches canvas width */
+    width: 800px; 
     margin-bottom: 5px;
 }
 
 #gameLogo {
-    height: 60px;
+    height: 50px;
     width: auto;
     object-fit: contain;
 }
 
-/* === HUD STATS (Now Horizontal) === */
+/* === HUD STATS === */
 #ui {
-  position: static; /* No longer stuck to the top-left corner */
   display: flex;
-  flex-direction: row; /* Side-by-side */
+  flex-direction: row; 
   gap: 15px;
 }
 
 .in-game-ui {
     min-width: 100px;
-    padding: 10px 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    padding: 8px 15px;
+    background: #111;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .in-game-ui .stat-label {
     font-size: 10px;
+    color: #777;
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 
 .in-game-ui .stat-value {
-    font-size: 24px; 
+    font-size: 22px; 
+    font-weight: 800;
+    color: #fff;
 }
 
-/* === CANVAS & PROGRESS BAR === */
-canvas {
+/* === GAME CANVAS === */
+#gameCanvas {
   background: #000000;
   border: 3px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 0 40px rgba(0,0,0,0.6);
 }
 
+/* === PROGRESS BAR === */
 #timeProgressContainer {
     width: 800px;
-    height: 15px; 
+    height: 10px; 
     background-color: #111;
-    border: 2px solid var(--border);
-    border-radius: 8px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
     overflow: hidden;
+    margin-top: 5px;
 }
 
 #timeProgressBar {
     height: 100%;
     width: 0%;
-    background-color: #ffffff;
-    box-shadow: 0 0 10px #7a7a7a;
+    background-color: #fff;
     transition: width 0.1s linear;
 }
 
-/* === MENU CONTAINERS === */
+/* === MENUS & LAYOUTS === */
 .full-screen-menu {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100vh;
-  background: var(--bg);
+  background: transparent; 
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 20px;
+  z-index: 50;
+  pointer-events: none; 
 }
 
 #overlay {
@@ -122,254 +153,219 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.7); 
   z-index: 100;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
+  backdrop-filter: blur(5px);
 }
 
-#pauseMenu, #settingsMenu, #taskCompleteMenu {
-  background: var(--panel);
-  padding: 30px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
+/* === PANEL STYLING === */
+.menu-panel {
+  background: #141414; 
+  padding: 40px;
+  border-radius: 16px;
+  border: 1px solid #333;
   text-align: center;
-  min-width: 300px;
+  min-width: 450px;
+  max-width: 650px;
   display: flex; 
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
   position: relative;
-  z-index: 10;
+  pointer-events: auto; 
 }
 
-#taskCompleteMenu {
-    min-width: 500px;
-    gap: 25px;
+.menu-logo {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+    margin: 0 auto 10px auto;
 }
 
-/* === STATS & GRIDS === */
-.stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
-    width: 100%;
-}
-
-.stat-item {
-    display: flex;
-    flex-direction: column;
+/* === TUTORIAL SECTION === */
+.tutorial-container {
     background: #0a0a0a;
-    padding: 15px;
+    border: 1px solid #333;
     border-radius: 8px;
-    border: 1px solid var(--border);
-    align-items: center;
-    min-width: 140px;
+    padding: 25px;
+    text-align: left;
 }
 
-.stat-label {
-    font-size: 12px;
-    font-weight: bold;
-    color: #777;
-    margin-bottom: 5px;
-    letter-spacing: 1px;
+.tutorial-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+.tutorial-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
     text-transform: uppercase;
 }
 
-.stat-value {
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--text);
+.tutorial-list {
+    margin: 0;
+    padding-left: 20px;
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.7;
 }
 
-/* === BUTTONS & CARDS === */
+.tutorial-list li { margin-bottom: 6px; }
+.tutorial-list strong { color: #fff; font-weight: 600; }
+
+/* === BUTTONS === */
 button {
-  padding: 12px 18px;
-  background: var(--button-bg);
+  padding: 14px 20px;
+  background: #1a1a1a;
   border: 1px solid var(--border);
-  color: var(--button-text);
+  color: #fff;
   cursor: pointer;
   border-radius: 8px;
-  font-size: 16px;
-  transition: 0.15s ease;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 button:hover {
-  background: var(--button-hover);
+  background: #252525;
+  border-color: #666;
 }
 
-.secondary-btn {
-  position: static;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 10px 30px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: 0.2s;
-}
-
-.secondary-btn:hover {
-  background: var(--button-hover);
-  border-color: white;
-}
-
-.big-btn {
-    position: absolute;
-    top: 59.2%; 
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 280px; 
-    height: 100px;
-    background-color: transparent; 
-    color: transparent;
+.primary-btn {
+    background: #fff;
+    color: #000;
     border: none;
-    z-index: 999; 
-    cursor: pointer;
 }
-.big-btn:hover { background-color: transparent; }
+.primary-btn:hover {
+    background: #e0e0e0;
+}
 
-.menu-buttons-row {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
+#btnStartGame {
+    background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+    color: white;
+    font-size: 20px;
+    padding: 18px;
+    border: 1px solid #ff3333;
+    box-shadow: 0 5px 15px rgba(255, 0, 0, 0.2);
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
     width: 100%;
 }
 
-/* === MODE SELECTION CARDS === */
-.mode-buttons {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    align-items: center;
+#btnStartGame:hover {
+    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+    box-shadow: 0 5px 20px rgba(255, 0, 0, 0.4);
+    transform: translateY(-1px);
 }
 
-.mode-card {
-    background: var(--panel);
-    border: 2px solid var(--border);
-    border-radius: 15px;
-    width: 200px;  
-    height: 160px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: 0.2s;
-    padding: 20px;
+.secondary-btn {
+  background: transparent;
+  color: #888;
+  border-color: #333;
+}
+.secondary-btn:hover {
+  background: rgba(255,255,255,0.05);
+  color: #fff;
 }
 
-.mode-card:hover {
-    border-color: var(--text);
-    background: var(--button-hover);
-}
+.menu-panel > button { width: 100%; }
 
-.mode-card h3 { margin: 0 0 10px 0; color: #fff; font-size: 20px; }
-.mode-card p { margin: 0; font-size: 14px; color: #999; }
-
-#btnTimeToggle {
+.menu-buttons-row { 
+    display: flex; 
+    gap: 10px; 
     margin-top: 10px;
-    width: 320px; 
-    height: 80px; 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 0px;
+    width: 100%;
 }
+.menu-buttons-row button { flex: 1; }
 
-.purple-card { border-color: #bf00ff !important; box-shadow: 0 0 15px rgba(191, 0, 255, 0.2); }
-.purple-card h3 { color: #bf00ff !important; }
-
-.gold-card { border-color: #ffcc00 !important; box-shadow: 0 0 15px rgba(255, 204, 0, 0.2); }
-.gold-card h3 { color: #ffcc00 !important; }
-
-/* === SETTINGS COMPONENTS === */
 .setting-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     color: var(--text);
-    font-size: 18px;
+    font-size: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid #222;
 }
+.setting-row:last-child { border-bottom: none; }
 
-#settingsMenu button {
+/* === MODE SELECTION CARDS === */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
     width: 100%;
-    position: static;
 }
 
-h2 { margin: 0 0 15px 0; color: var(--text); }
-
-input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    accent-color: #ff0000;
-}
-
-input[type="color"] {
-    -webkit-appearance: none;
-    appearance: none;
-    border: 1px solid white; 
-    padding: 0;
-    width: 40px;
-    height: 25px;
-    cursor: pointer;
-    background: none;
-}
-input[type="color"]::-webkit-color-swatch { border: none; }
-input[type="color"]::-moz-color-swatch { border: none; }
-
-/* === MEDIA & ANIMATIONS === */
-.fullscreen-media {
-    position: fixed;
-    top: 0;
-    left: 0;
+.mode-card {
+    background: #1a1a1a; 
+    border: 1px solid var(--border);
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
     width: 100%;
-    height: 100%;
-    z-index: 60; 
-    background-color: black;
+    min-width: 0;
+    overflow: hidden;
 }
 
-.fullscreen-media video, 
-.fullscreen-media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+.mode-card:hover {
+    background: #222;
+    border-color: #777;
+    transform: translateY(-2px);
 }
 
-#titleScreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;       
-    justify-content: center; 
-    align-items: center;     
-    z-index: 70; 
-    background: transparent;
+.mode-card.selected-mode {
+    background: #2a2a2a;
+    border-color: #fff;
 }
 
-#modeSelectScreen { z-index: 50; }
-
-.fade-out-sequence {
-    opacity: 0;
-    transition: opacity 1s ease;
-    pointer-events: none;
+.mode-card h3 { 
+    margin: 0; 
+    font-size: 16px; 
+    color: #fff; 
+    white-space: nowrap; 
 }
+.mode-card p { margin: 0; font-size: 12px; color: #888; }
 
-#confettiCanvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0; 
+.purple-card { border-color: #bf00ff !important; }
+.purple-card h3 { color: #bf00ff !important; }
+
+.gold-card { border-color: #ffcc00 !important; }
+.gold-card h3 { color: #ffcc00 !important; }
+
+/* === MISC === */
+h2 { margin: 0 0 20px 0; color: #fff; font-size: 24px; }
+#titleScreen { z-index: 70; pointer-events: auto; }
+
+#confettiCanvas { 
+    position: absolute; 
+    top:0; 
+    left:0; 
+    width:100%; 
+    height:100%; 
+    pointer-events:none; 
+    z-index:0;
     background: transparent !important;
     border: none !important;
-    box-shadow: none !important;
 }
+
+.big-btn {
+    position: absolute; 
+    top: 59.2%; left: 50%; transform: translate(-50%, -50%);
+    width: 280px; height: 100px; 
+    background: transparent; color: transparent; border: none;
+    z-index: 999; cursor: pointer; font-size: 0; outline: none;
+}
+.big-btn:hover, .big-btn:focus { background: transparent; border: none; outline: none; }
